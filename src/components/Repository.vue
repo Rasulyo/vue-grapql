@@ -1,0 +1,137 @@
+<template>
+  <div class="card">
+    <div class="card-header">
+      <h3><a :href="repository.node.url" class="rep-name" target="_blank" >{{ repository.node.name }}</a></h3>
+    </div>
+    <p>{{ repository.node.description }}</p>
+
+    <div class="card-body">
+      <img
+        :src="repository.node.owner.avatarUrl"
+        alt="Owner avatar"
+        :class="{ 'hidden': !repository.node.owner.avatarUrl }"
+      />
+      <a>{{ repository.node.owner.login }}</a>
+      <ul class="languages">
+        <li v-for="language in repository?.node?.languages?.edges" :key="language.id">
+          {{ language.node.name }}
+        </li>
+      </ul>
+    </div>
+    <div class="under-content">
+      <span> 
+        <svg 
+          version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg"
+          xmlns:xlink="http://www.w3.org/1999/xlink" 
+          x="0px" y="0px" 
+          width="22px" 
+          height="22px"
+          viewBox="0 0 122.879 117.188" 
+          enable-background="new 0 0 122.879 117.188" 
+          xml:space="preserve">
+          <g>
+              <path
+                  d="M64.395,1.969l15.713,36.79l39.853,3.575c1.759,0.152,3.06,1.701,2.907,3.459c-0.073,0.857-0.479,1.604-1.079,2.129 l0.002,0.001L91.641,74.25l8.917,39.021c0.395,1.723-0.683,3.439-2.406,3.834c-0.883,0.203-1.763,0.018-2.466-0.441L61.441,96.191 L27.087,116.73c-1.516,0.906-3.48,0.412-4.387-1.104c-0.441-0.736-0.55-1.58-0.373-2.355h-0.003l8.918-39.021L1.092,47.924 c-1.329-1.163-1.463-3.183-0.301-4.512c0.591-0.676,1.405-1.042,2.235-1.087l39.748-3.566l15.721-36.81 c0.692-1.627,2.572-2.384,4.199-1.692C63.494,0.597,64.084,1.225,64.395,1.969L64.395,1.969z M74.967,43.023L61.441,11.351 L47.914,43.023l-0.004-0.001c-0.448,1.051-1.447,1.826-2.665,1.932l-34.306,3.078l25.819,22.545c0.949,0.74,1.438,1.988,1.152,3.24 l-7.674,33.578l29.506-17.641c0.986-0.617,2.274-0.672,3.342-0.033l29.563,17.674l-7.673-33.578l0.003-0.002 c-0.252-1.109,0.096-2.318,1.012-3.119l25.955-22.664L77.815,44.97C76.607,44.932,75.472,44.208,74.967,43.023L74.967,43.023z" />
+          </g>
+        </svg> {{ repository.node.stargazers.totalCount }}</span>
+      <span>{{ "updated" + " " + formatUpdatedAt(repository.node.updatedAt) }}</span>
+    </div>
+  </div>
+</template>
+
+<script lang="ts">
+import { defineComponent, toRefs } from "vue";
+import { formatDistance } from "date-fns";
+
+export default defineComponent({
+  name: "RepositoryCard",
+  props: {
+    repository: {
+      type: Object,
+      required: true
+    },
+    searchOptions: {
+      type: Object,
+      required: true
+    }
+  },
+  setup(props) {
+    const { repository } = toRefs(props);
+    const formatUpdatedAt = (updatedAt: string) => {
+      return formatDistance(new Date(updatedAt), new Date(), {
+        addSuffix: true
+      });
+    };
+
+    return {
+      formatUpdatedAt,
+      repository
+    };
+  }
+});
+</script>
+
+<style scoped lang="scss">
+.card{
+  height: auto;
+  height: auto;
+  width: calc(100% - 3.5rem);
+  padding: 10px;
+  background: white;
+  box-shadow: inset 4px 4px 10px rgba($color: #000000, $alpha: 0.5);
+  border-radius: 10px;
+}
+.card-header{
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 20px;
+}
+
+.rep-name{
+  color: blue;
+  cursor: pointer;
+  text-decoration: none;
+}
+.card-body{
+  object-fit: contain;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  & img{
+    height: 50px;
+    width: auto;
+  }
+}
+.languages {
+  list-style: none;
+  padding: 0;
+}
+
+.languages li {
+  margin-right: 10px; 
+  display: inline-block;
+  background-color: #007BFF;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px; 
+  font-size: 14px;
+}
+
+.under-content{
+  display: flex;
+  justify-content: space-between;
+  max-width: max-content;
+  margin-top: 10px;
+  gap: 20px;
+  align-items: center;
+  & svg {
+    &:hover{
+      path {
+        fill: blue;
+      }
+    }
+  }
+}
+</style>

@@ -1,99 +1,94 @@
+<template>
+  <h1>
+    Find
+    <span>GitHub</span>
+    Repositories:
+  </h1>
+  <SearchBar @search="search" />
+  <RepositoryList :search-options="searchOptions" :ownRepositories="repositories" :after="searchOptions.after" />
+</template>
+
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
-import Paginator from './components/Paginator.vue'
-import { UseQueryReturn, useQuery } from '@vue/apollo-composable';
-import { gql } from '@apollo/client';
-import { Repository } from './components/types';
+import { defineComponent, onMounted, reactive, ref, watch } from "vue";
+import RepositoryList from "./components/RepositoryList.vue";
+import SearchBar from "./components/SearchBar.vue";
+import { useQuery } from "@vue/apollo-composable";
+import { GET_OWN_REPOSITORIES, SEARCH_REPOS } from "./graphql/documents";
 
 export default defineComponent({
-  name: 'App',
+  name: "App",
   components: {
-    Paginator
+    RepositoryList,
+    SearchBar
   },
-  
   setup() {
-    const searchQuery = ref('')
-    const repositories = ref<Array<Repository>>([])
-    const currentPage = ref(1)
+    const ownRepo = reactive({
+      login: "Rasulyo",
+    });
 
-    // Запрос списка репозиториев
-    const data: UseQueryReturn<any, { variables: { searchQuery: any; page: any; }; }> = useQuery(gql`
-      query {
-        repositories(type: "public", search: $searchQuery, page: $page) {
-          nodes {
-            name
-            stargazers_count
-            updated_at
-            html_url
-          }
-          total_count
-        }
+    const searchOptions = reactive({
+      query: "",
+      limit: 10,
+      after: ''
+    });
+  
+
+    const { result: ownRepositoriesResult, execute: executeOwnRepositories } = useQuery(
+      GET_OWN_REPOSITORIES,
+      ownRepo
+    );
+
+    const { result: searchResult , execute: executeSearch} = useQuery(
+      SEARCH_REPOS,
+      searchOptions
+    );
+
+
+    const search = async(query: string, after: string) => {
+      searchOptions.query = query;
+      searchOptions.after = after;
+      
+      if (!searchOptions.query.trim()) {
+        await executeOwnRepositories();
       }
-    `, {
-      variables: {
-        searchQuery, // Передать пустую строку в качестве значения переменной при первом запросе данных
-        page: currentPage,
-      },
-    })
+      await executeSearch();
+    };
 
-    // Отображение списка репозиториев
-    if (!data.loading) {
-      console.log(repositories.value, 'repositories.value')
-    }
+    const repositories = ref([]);
+
+    watch([ownRepositoriesResult, searchResult], () => {
+      if (!searchOptions.query.trim()) {
+        repositories.value = ownRepositoriesResult.value.user.repositories.edges;
+      } else {
+        repositories.value = ownRepositoriesResult.value.user.repositories.edges;
+      }
+    });
+
+    onMounted(() => {
+      repositories.value = ownRepositoriesResult.value?.user.repositories.edges || [];
+    });
 
     return {
-      searchQuery,
+      searchOptions,
+      search,
       repositories,
-      currentPage,
-      // Изменение типа свойства `pages` на `Array<number>`
-    }
-  },
+    };
+  }
 });
 </script>
 
-<template>
-  <div>
-    <a href="https://vitejs.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
-  </div>
-  <HelloWorld msg="Vite + Vue" />
-  <div>
-    <h1>Github Repo Search</h1>
-
-    <input v-model="searchQuery" type="text" placeholder="Search...">
-
-    <ul v-for="repository of repositories" :key="repository.id">
-      <li>
-        <a :href="repository.html_url">
-          {{ repository.name }}
-        </a>
-        <span>
-          {{ repository.stargazers_count }} stars
-          <br>
-          {{ repository.updated_at }}
-        </span>
-      </li>
-    </ul>
-
-    <paginator :pages="pages" :activePage="currentPage"></paginator>
-  </div>
-</template>
-
-<style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Martian+Mono&family=Merriweather:wght@300;400;700;900&family=Roboto:wght@100;400;700&display=swap');
+body {
+  background: black;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 10px;
+  font-family: 'Martian Mono', monospace;
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
+
+ul {
+  margin: 0;
+  padding: 0;
 }
 </style>
