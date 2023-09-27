@@ -1,9 +1,9 @@
-import App from './App.vue'
 import { createApp, provide, h } from 'vue'
 import { DefaultApolloClient } from '@vue/apollo-composable'
 import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client/core'
-import store from './store';
-import { githubToken } from './constant';
+import App from './App.vue'
+import store from './store/store';
+import { githubToken } from './utils/constant';
 
 const httpLink = createHttpLink({
   uri: 'https://api.github.com/graphql',

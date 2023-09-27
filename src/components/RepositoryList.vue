@@ -6,31 +6,26 @@
     <p>Request has failed!</p>
   </div>
   <div>
-    <ul
-      class="repositories"
-    >
-      <li class="" v-for="(repository, index) in repositories"
-      :key="index">
+    <ul class="repositories">
+      <!-- key should be id not index -->
+      <li class="" v-for="(repository, index) in repositories" :key="index">
         <Repository :repository="repository"/>
       </li>
     </ul>
-    <Paginator :pages="pages" :activePage="activePage"/>
     <button class="btn" v-if="isNotMy.length" @click="fetchNextPage">next</button>
-    <button class="btn" v-if="isPrev && isNotMy.length" @click="fetchPreviousPage">prev</button>
+    <button class="btn" v-if="isNotMy.length" @click="fetchPreviousPage">prev</button>
   </div>
 </template>
 
 <script lang="ts">
 import { computed, ref} from "vue";
-import Repository from "./Repository.vue";
-import Paginator from "./Paginator.vue";
 import { useStore } from 'vuex';
+import Repository from "./Repository.vue";
 
 export default {
   name: "RepositoryList",
   components: {
     Repository,
-    Paginator
   },
   setup() {
     const loading = ref(false);
@@ -45,13 +40,7 @@ export default {
 
     const pages = computed(() => store.getters.pages)
     const activePage = computed(() => store.getters.page)
-
-    const isPrev = computed(() => store.getters.pageInfo?.hasPreviousPage);
     const isNotMy = computed(() => store.getters.searchResults);
-    console.log({
-      isNotMy,
-      isPrev
-    })
 
     const fetchNextPage = () => {
       const endCursor = store.getters.pageInfo?.endCursor;
@@ -68,7 +57,6 @@ export default {
       loading,
       error,
       repositories,
-      isPrev,
       fetchNextPage,
       fetchPreviousPage,
       isNotMy,

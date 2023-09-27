@@ -10,9 +10,9 @@
 
 <script lang="ts">
 import { defineComponent, computed, onMounted } from "vue";
+import { useStore } from "vuex";
 import RepositoryList from "./components/RepositoryList.vue";
 import SearchBar from "./components/SearchBar.vue";
-import { useStore } from "vuex";
 
 export default defineComponent({
   name: "App",
@@ -29,10 +29,10 @@ export default defineComponent({
     const getOwnRep = async () => {
       await store.dispatch('fetchOwnRepositories');
     };
+
     onMounted( async() => {
       await getOwnRep();
     });
-
 
     return {
       searchOptions,

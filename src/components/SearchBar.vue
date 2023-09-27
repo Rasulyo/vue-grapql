@@ -24,7 +24,7 @@
       </svg>
       <input
         class="input"
-        placeholder="Ex. React"
+        placeholder="Search"
         style="width: calc(100% - 3.5rem);"
         @input="handleInputChange"
         v-model="searchQuery"
@@ -36,7 +36,7 @@
 <script lang="ts">
 import { defineComponent, ref } from "vue";
 import { useStore } from "vuex";
-import { debounce } from "../utils";
+import { debounce } from "../utils/utils";
   
 export default defineComponent({
     name: "SearchBar",
@@ -47,7 +47,7 @@ export default defineComponent({
       const handleInputChange = debounce((evt: Event) => {
         const element = evt.target as HTMLInputElement;
         const searchQuery = element.value;
-        const obj = {query: searchQuery, after: null, offset: 1}
+        const obj = {query: searchQuery, after: null}
         
         store.dispatch("searchRepositories", obj);
       }, 300);

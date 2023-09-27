@@ -1,10 +1,8 @@
 import { createStore } from 'vuex';
-import { GET_OWN_REPOSITORIES, SEARCH_REPOS } from './graphql/documents';
 import { useLazyQuery } from '@vue/apollo-composable';
-import { HttpLink, InMemoryCache } from "@apollo/client/core";
-import { ApolloClient } from '@apollo/client/core';
-
-const githubToken = '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'; 
+import { HttpLink, ApolloClient, InMemoryCache } from "@apollo/client/core";
+import { GET_OWN_REPOSITORIES, SEARCH_REPOS } from '../graphql/documents';
+import { githubToken } from '../utils/constant';
 
 export default createStore({
   state: {
@@ -55,7 +53,7 @@ export default createStore({
     },
     async searchRepositories({ commit }, query: any) {
       commit('setSearchOptions', query);
-    
+      // because of request out of component was error  
       const apolloClient = new ApolloClient({
         link: new HttpLink({
           uri: 'https://api.github.com/graphql',
