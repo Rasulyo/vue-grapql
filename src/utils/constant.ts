@@ -1,1 +1,1 @@
-export const githubToken = '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'
+export const GITHUB_TOKEN = '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';
