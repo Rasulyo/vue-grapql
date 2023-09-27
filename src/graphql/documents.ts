@@ -91,7 +91,7 @@ export const GET_OWN_REPOSITORIES = gql`
                 }
               }
             }
-            languages(first: 10) {  # Include languages used in the repository
+            languages(first: 10) {
               edges {
                 node {
                   name

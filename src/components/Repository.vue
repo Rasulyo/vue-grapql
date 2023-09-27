@@ -1,7 +1,7 @@
 <template>
   <div class="card">
     <div class="card-header">
-      <h3><a :href="repository.node.url" class="rep-name" target="_blank" >{{ repository.node.name }}</a></h3>
+      <h3><a :href="repository?.node?.url" class="rep-name" target="_blank" >{{ repository?.node?.name }}</a></h3>
     </div>
     <p>{{ repository.node.description }}</p>
 
@@ -50,10 +50,6 @@ export default defineComponent({
       type: Object,
       required: true
     },
-    searchOptions: {
-      type: Object,
-      required: true
-    }
   },
   setup(props) {
     const { repository } = toRefs(props);

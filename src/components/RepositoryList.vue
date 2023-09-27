@@ -1,9 +1,9 @@
 <template>
-  <div class="flex justify-center" v-if="loading">
-    <p class="text-xl font-bold text-gray-500">Request is loading...</p>
+  <div v-if="loading">
+    <p>Request is loading...</p>
   </div>
-  <div class="flex justify-center" v-else-if="error">
-    <p class="text-xl font-bold text-red-600">Request has failed!</p>
+  <div v-else-if="error">
+    <p>Request has failed!</p>
   </div>
   <div>
     <ul
@@ -11,21 +11,20 @@
     >
       <li class="" v-for="(repository, index) in repositories"
       :key="index">
-        <Repository :repository="repository" :search-options="searchOptions" />
+        <Repository :repository="repository"/>
       </li>
     </ul>
-    <button v-if="searchOptions.query.length" class="btn" @click="fetchNextPage">next</button>
-    <button v-if="searchOptions.query" class="btn" @click="fetchPreviousPage">prev</button>
+    <Paginator :pages="pages" :activePage="activePage"/>
+    <button class="btn" v-if="isNotMy.length" @click="fetchNextPage">next</button>
+    <button class="btn" v-if="isPrev && isNotMy.length" @click="fetchPreviousPage">prev</button>
   </div>
 </template>
 
 <script lang="ts">
-import { ref, toRefs, watch } from "vue";
-import { SearchResultItemConnection } from "@octokit/graphql-schema";
-import { SEARCH_REPOS } from "../graphql/documents";
+import { computed, ref} from "vue";
 import Repository from "./Repository.vue";
 import Paginator from "./Paginator.vue";
-import { useQuery } from "@vue/apollo-composable";
+import { useStore } from 'vuex';
 
 export default {
   name: "RepositoryList",
@@ -33,54 +32,50 @@ export default {
     Repository,
     Paginator
   },
-  props: {
-    ownRepositories: {
-      type: Array,
-      default: () => [],
-    },
-    searchOptions: {
-      type: Object,
-      default() {
-        return { query: "", limit: 10, after: "" };
-      }
-    },
-    after: {
-      type: String,
-      required: true
-    },
-  },
-  setup(props: { searchOptions: Record<string, any>, ownRepositories: Record<string, any> }) {
-    const { searchOptions, ownRepositories } = toRefs(props);
-    const { result, loading, error } = useQuery<{
-      search: SearchResultItemConnection;
-    }>(SEARCH_REPOS, searchOptions);
+  setup() {
+    const loading = ref(false);
+    const error = ref(null);
+    const store = useStore();
 
-    const repositories = ref([]);
-    
-    watch([props, ownRepositories, result], () => {
-      repositories.value = props.searchOptions.query.trim() ? (result.value?.search.edges || []) : ownRepositories.value;
+    const repositories = computed(() => {
+      const query = store.getters.searchOptions.query?.trim();
+      const result = store.getters.searchResults;
+      return query ? result : store.getters.ownRepositories;
     });
 
-    const isPrev = result.value?.search.pageInfo.hasPreviousPage
+    const pages = computed(() => store.getters.pages)
+    const activePage = computed(() => store.getters.page)
+
+    const isPrev = computed(() => store.getters.pageInfo?.hasPreviousPage);
+    const isNotMy = computed(() => store.getters.searchResults);
+    console.log({
+      isNotMy,
+      isPrev
+    })
+
     const fetchNextPage = () => {
-      searchOptions.value.after = result.value?.search.pageInfo.endCursor;
+      const endCursor = store.getters.pageInfo?.endCursor;
+      const res = { query: '', after: endCursor }; 
+      store.dispatch('fetchPage', res);
     };
 
     const fetchPreviousPage = () => {
-      searchOptions.value.after = result.value?.search.pageInfo.startCursor;
+      const startCursor = store.getters.pageInfo?.startCursor;
+      store.dispatch('fetchPage', { query: '', after: startCursor });
     };
 
     return {
       loading,
       error,
-      repositories: repositories,
-      Repository,
+      repositories,
       isPrev,
       fetchNextPage,
       fetchPreviousPage,
-      searchOptions
+      isNotMy,
+      pages,
+      activePage
     };
-  }
+  },
 };
 </script>
 

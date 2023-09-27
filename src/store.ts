@@ -1,31 +1,113 @@
 import { createStore } from 'vuex';
+import { GET_OWN_REPOSITORIES, SEARCH_REPOS } from './graphql/documents';
+import { useLazyQuery } from '@vue/apollo-composable';
+import { HttpLink, InMemoryCache } from "@apollo/client/core";
+import { ApolloClient } from '@apollo/client/core';
+
+const githubToken = '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'; 
 
 export default createStore({
   state: {
     ownRepositories: [],
+    searchQuery: '',
+    searchResults: [],
     searchOptions: {
       query: '',
       limit: 10,
-      after: '',
+      after: null,
     },
+    pageInfo: {
+      endCursor: null,
+      startCursor: null,
+      hasPreviousPage: false,
+      hasNextPage: false
+    },
+    pages: null,
+    page: 1
   },
   mutations: {
     setOwnRepositories(state, repositories) {
       state.ownRepositories = repositories;
     },
     setSearchOptions(state, options) {
-      state.searchOptions = options;
+      state.searchOptions.query = options.query;
+      state.searchOptions.after = options.after;
     },
+    setSearchQuery(state, query) {
+      state.searchQuery = query;
+    },
+    setSearchResults(state, repos){
+      state.searchResults = repos;
+    },
+    setPageInfo(state, pageInfo){
+      state.pageInfo = pageInfo.pageInfo
+    }
   },
   actions: {
     async fetchOwnRepositories({ commit }) {
-      // Здесь выполните запрос к API GitHub для получения собственных репозиториев
-      // Затем вызовите мутацию setOwnRepositories для обновления состояния
+      const { load } = useLazyQuery(GET_OWN_REPOSITORIES, { login: 'Rasulyo' });
+      const result = await load();
+      if (result) {
+        commit('setOwnRepositories', result.user.repositories.edges);
+      } else {
+        console.error('Error fetching own repositories:');
+      } 
     },
-    async searchRepositories({ commit }, { query, after }) {
-      // Здесь выполните запрос к API GitHub для поиска репозиториев
-      // Затем вызовите мутацию setSearchOptions для обновления состояния
+    async searchRepositories({ commit }, query: any) {
+      commit('setSearchOptions', query);
+    
+      const apolloClient = new ApolloClient({
+        link: new HttpLink({
+          uri: 'https://api.github.com/graphql',
+          headers: {
+            Authorization: `Bearer ${githubToken}`,
+          },
+        }),
+        cache: new InMemoryCache(),
+      });
+    
+      const options = this.state.searchOptions;
+      const offset = (this.state.page - 1) * this.state.searchOptions.limit;
+      const result = await apolloClient.query({
+        query: SEARCH_REPOS,
+        variables: {
+          query: options.query,
+          limit: options.limit,
+          after: options.after,
+          offset,
+        },
+      });
+      if (result) {
+        commit('setSearchResults', result.data.search.edges);
+        commit('setPageInfo', result.data.search);
+      } else {
+        console.error('Error searching repositories:');
+      }
     },
+    async fetchPage({commit}, data){
+      commit('setPageInfo', data)
+      const apolloClient = new ApolloClient({
+        link: new HttpLink({
+          uri: 'https://api.github.com/graphql',
+          headers: {
+            Authorization: `Bearer ${githubToken}`,
+          },
+        }),
+        cache: new InMemoryCache(),
+      });
+      const options = this.state.searchOptions;
+
+      const result = await apolloClient.query({
+        query: SEARCH_REPOS,
+        variables: options,
+      });
+      if (result) {
+        commit('setSearchResults', result.data.search.edges);
+        commit('setPageInfo', result.data.search);
+      } else {
+        console.error('Error searching repositories:');
+      }
+    }
   },
   getters: {
     ownRepositories(state) {
@@ -34,5 +116,20 @@ export default createStore({
     searchOptions(state) {
       return state.searchOptions;
     },
+    searchQuery(state) {
+      return state.searchQuery;
+    },
+    searchResults(state) {
+      return state.searchResults;
+    },
+    pageInfo(state){
+      return state.pageInfo;
+    },
+    pages(state){
+      return state.pages
+    },
+    getPage(state){
+      return state.page
+    }
   },
 });
