@@ -2,7 +2,6 @@ import { createStore } from 'vuex';
 import { useLazyQuery } from '@vue/apollo-composable';
 import { HttpLink, ApolloClient, InMemoryCache } from "@apollo/client/core";
 import { GET_OWN_REPOSITORIES, SEARCH_REPOS } from '../graphql/documents';
-import { GITHUB_TOKEN } from '../utils/constant';
 
 export default createStore({
   state: {
@@ -58,7 +57,7 @@ export default createStore({
         link: new HttpLink({
           uri: 'https://api.github.com/graphql',
           headers: {
-            Authorization: `Bearer ${GITHUB_TOKEN}`,
+            Authorization: `Bearer ${import.meta.env.VITE_TOKEN}`,
           },
         }),
         cache: new InMemoryCache(),
@@ -88,7 +87,7 @@ export default createStore({
         link: new HttpLink({
           uri: 'https://api.github.com/graphql',
           headers: {
-            Authorization: `Bearer ${GITHUB_TOKEN}`,
+            Authorization: `Bearer ${import.meta.env.VITE_TOKEN}`,
           },
         }),
         cache: new InMemoryCache(),
